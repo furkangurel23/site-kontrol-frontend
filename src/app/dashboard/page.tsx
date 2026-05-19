@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { Home, Users, Wallet, AlertTriangle, Wrench, Megaphone } from "lucide-react";
 import Link from "next/link";
+import { SiteLocationCard } from "@/components/dashboard/site-location-card";
 
 const COLORS = ["#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#6366f1", "#84cc16"];
 
@@ -206,6 +207,8 @@ export default function DashboardHome() {
           </CardContent>
         </Card>
       </div>
+
+      <SiteLocationCard />
 
       <Card>
         <CardHeader className="flex-row items-center justify-between">
