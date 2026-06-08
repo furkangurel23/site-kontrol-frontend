@@ -4,7 +4,9 @@ import { useState } from "react";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input, Label } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
+import { Field } from "@/components/ui/field";
+import { PageHeader } from "@/components/ui/page-header";
 import { FileSpreadsheet, FileText } from "lucide-react";
 
 export default function RaporlarPage() {
@@ -12,7 +14,7 @@ export default function RaporlarPage() {
   const [start, setStart] = useState(`${year}-01-01`);
   const [end, setEnd] = useState(`${year}-12-31`);
 
-  const download = async (url: string, name: string, params?: any) => {
+  const download = async (url: string, name: string, params?: Record<string, string>) => {
     const res = await api.get(url, { responseType: "blob", params });
     const blob = URL.createObjectURL(res.data);
     const a = document.createElement("a"); a.href = blob; a.download = name; a.click();
@@ -20,10 +22,7 @@ export default function RaporlarPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Raporlar</h1>
-        <p className="text-sm text-muted-foreground">Excel ve Word formatında veri ihracı</p>
-      </div>
+      <PageHeader title="Raporlar" subtitle="Excel ve Word formatında veri ihracı" />
 
       <Card>
         <CardHeader>
@@ -31,8 +30,8 @@ export default function RaporlarPage() {
           <CardDescription>Bazı raporlar tarih aralığı gerektirir.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">
-          <div><Label>Başlangıç</Label><Input type="date" value={start} onChange={(e) => setStart(e.target.value)} /></div>
-          <div><Label>Bitiş</Label><Input type="date" value={end} onChange={(e) => setEnd(e.target.value)} /></div>
+          <Field label="Başlangıç"><Input type="date" value={start} onChange={(e) => setStart(e.target.value)} /></Field>
+          <Field label="Bitiş"><Input type="date" value={end} onChange={(e) => setEnd(e.target.value)} /></Field>
         </CardContent>
       </Card>
 

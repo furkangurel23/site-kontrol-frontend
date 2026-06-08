@@ -7,14 +7,40 @@ import { toast } from "sonner";
 import { Plus, Trash2, FileSpreadsheet, FileText, Search } from "lucide-react";
 
 import { api } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { extractApiError } from "@/lib/utils";
+import { RESIDENT_TYPE_COLORS } from "@/lib/status-colors";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input, Label } from "@/components/ui/input";
-import { Table, THead, TBody } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Field } from "@/components/ui/field";
+import { PageHeader } from "@/components/ui/page-header";
+import { Select } from "@/components/ui/select";
+import { Table, THead, TBody, Th, Td } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Empty } from "@/components/ui/empty";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { isAdminRole, useAuthStore } from "@/stores/auth";
+
+type ApartmentOption = { id: number; block: string; apartmentNumber: string };
+
+type Resident = {
+  id: number;
+  apartmentLabel?: string | null;
+  fullName: string;
+  type: "MALIK" | "KIRACI" | string;
+  phone?: string | null;
+  email?: string | null;
+};
+
+type ResidentFormValues = {
+  apartmentId: number | string;
+  fullName: string;
+  phone?: string;
+  email?: string;
+  identityNo?: string;
+  type: string;
+  isPrimary?: boolean;
+};
 
 export default function SakinlerPage() {
   const qc = useQueryClient();
@@ -22,24 +48,24 @@ export default function SakinlerPage() {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
 
-  const apartments = useQuery({
+  const apartments = useQuery<ApartmentOption[]>({
     queryKey: ["apartments", "all"],
     queryFn: async () => (await api.get("/api/apartments/all")).data,
   });
 
-  const list = useQuery({
+  const list = useQuery<Resident[]>({
     queryKey: ["residents", q],
     queryFn: async () => (await api.get("/api/residents", { params: { q: q || undefined, size: 200 } })).data.content,
   });
 
-  const form = useForm<any>({
+  const form = useForm<ResidentFormValues>({
     defaultValues: { apartmentId: "", fullName: "", phone: "", email: "", type: "MALIK", isPrimary: true },
   });
 
   const create = useMutation({
-    mutationFn: async (data: any) => (await api.post("/api/residents", { ...data, apartmentId: Number(data.apartmentId) })).data,
+    mutationFn: async (data: ResidentFormValues) => (await api.post("/api/residents", { ...data, apartmentId: Number(data.apartmentId) })).data,
     onSuccess: () => { toast.success("Sakin eklendi"); qc.invalidateQueries({ queryKey: ["residents"] }); setOpen(false); form.reset(); },
-    onError: (e: any) => toast.error(e?.response?.data?.message ?? "Hata"),
+    onError: (e: unknown) => toast.error(extractApiError(e) ?? "Hata"),
   });
 
   const del = useMutation({
@@ -56,52 +82,50 @@ export default function SakinlerPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">Sakinler</h1>
-          <p className="text-sm text-muted-foreground">Tüm malikler ve kiracılar</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => download("xlsx")}><FileSpreadsheet className="h-4 w-4" />Excel</Button>
-          <Button variant="outline" onClick={() => download("docx")}><FileText className="h-4 w-4" />Word</Button>
-          {isAdmin && (
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild><Button><Plus className="h-4 w-4" />Yeni Sakin</Button></DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>Yeni Sakin</DialogTitle></DialogHeader>
-                <form onSubmit={form.handleSubmit((d) => create.mutate(d))} className="grid gap-3">
-                  <div>
-                    <Label>Daire</Label>
-                    <select {...form.register("apartmentId", { required: true })} className="h-10 w-full rounded-xl border bg-background px-3 text-sm">
-                      <option value="">Seçin</option>
-                      {(apartments.data ?? []).map((a: any) => <option key={a.id} value={a.id}>{a.block}/{a.apartmentNumber}</option>)}
-                    </select>
-                  </div>
-                  <div><Label>Ad Soyad</Label><Input {...form.register("fullName", { required: true })} /></div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div><Label>Telefon</Label><Input {...form.register("phone")} /></div>
-                    <div><Label>E-posta</Label><Input type="email" {...form.register("email")} /></div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div><Label>TC No</Label><Input {...form.register("identityNo")} /></div>
-                    <div>
-                      <Label>Tip</Label>
-                      <select {...form.register("type")} className="h-10 w-full rounded-xl border bg-background px-3 text-sm">
-                        <option value="MALIK">Malik</option>
-                        <option value="KIRACI">Kiracı</option>
-                      </select>
+      <PageHeader
+        title="Sakinler"
+        subtitle="Tüm malikler ve kiracılar"
+        actions={
+          <>
+            <Button variant="outline" onClick={() => download("xlsx")}><FileSpreadsheet className="h-4 w-4" />Excel</Button>
+            <Button variant="outline" onClick={() => download("docx")}><FileText className="h-4 w-4" />Word</Button>
+            {isAdmin && (
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild><Button><Plus className="h-4 w-4" />Yeni Sakin</Button></DialogTrigger>
+                <DialogContent>
+                  <DialogHeader><DialogTitle>Yeni Sakin</DialogTitle></DialogHeader>
+                  <form onSubmit={form.handleSubmit((d) => create.mutate(d))} className="grid gap-3">
+                    <Field label="Daire">
+                      <Select {...form.register("apartmentId", { required: true })}>
+                        <option value="">Seçin</option>
+                        {(apartments.data ?? []).map((a) => <option key={a.id} value={a.id}>{a.block}/{a.apartmentNumber}</option>)}
+                      </Select>
+                    </Field>
+                    <Field label="Ad Soyad"><Input {...form.register("fullName", { required: true })} /></Field>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field label="Telefon"><Input {...form.register("phone")} /></Field>
+                      <Field label="E-posta"><Input type="email" {...form.register("email")} /></Field>
                     </div>
-                  </div>
-                  <DialogFooter>
-                    <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Vazgeç</Button>
-                    <Button type="submit" disabled={create.isPending}>Kaydet</Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
-      </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field label="TC No"><Input {...form.register("identityNo")} /></Field>
+                      <Field label="Tip">
+                        <Select {...form.register("type")}>
+                          <option value="MALIK">Malik</option>
+                          <option value="KIRACI">Kiracı</option>
+                        </Select>
+                      </Field>
+                    </div>
+                    <DialogFooter>
+                      <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Vazgeç</Button>
+                      <Button type="submit" disabled={create.isPending}>Kaydet</Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            )}
+          </>
+        }
+      />
 
       <div className="relative max-w-sm">
         <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -112,16 +136,25 @@ export default function SakinlerPage() {
         <CardContent className="pt-5">
           {(list.data ?? []).length === 0 ? <Empty title="Sakin yok" /> : (
             <Table>
-              <THead><tr><th>Daire</th><th>Ad Soyad</th><th>Tip</th><th>Telefon</th><th>E-posta</th><th></th></tr></THead>
+              <THead>
+                <tr>
+                  <Th>Daire</Th>
+                  <Th>Ad Soyad</Th>
+                  <Th>Tip</Th>
+                  <Th>Telefon</Th>
+                  <Th>E-posta</Th>
+                  <Th align="right" className="w-[1%]"><span className="sr-only">İşlemler</span></Th>
+                </tr>
+              </THead>
               <TBody>
-                {(list.data ?? []).map((r: any) => (
+                {(list.data ?? []).map((r) => (
                   <tr key={r.id}>
-                    <td className="font-medium">{r.apartmentLabel ?? "—"}</td>
-                    <td>{r.fullName}</td>
-                    <td><Badge color={r.type === "MALIK" ? "violet" : "amber"}>{r.type}</Badge></td>
-                    <td>{r.phone ?? "—"}</td>
-                    <td>{r.email ?? "—"}</td>
-                    <td>{isAdmin && <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}><Trash2 className="h-4 w-4 text-rose-600" /></Button>}</td>
+                    <Td className="font-medium">{r.apartmentLabel ?? "—"}</Td>
+                    <Td>{r.fullName}</Td>
+                    <Td><Badge color={RESIDENT_TYPE_COLORS[r.type] ?? "slate"}>{r.type}</Badge></Td>
+                    <Td>{r.phone ?? "—"}</Td>
+                    <Td>{r.email ?? "—"}</Td>
+                    <Td align="right">{isAdmin && <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}><Trash2 className="h-4 w-4 text-rose-600" /></Button>}</Td>
                   </tr>
                 ))}
               </TBody>

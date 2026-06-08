@@ -25,3 +25,19 @@ export const formatDateTime = (iso?: string | null) => {
   if (!iso) return "—";
   try { return new Date(iso).toLocaleString("tr-TR"); } catch { return iso; }
 };
+
+/**
+ * Axios hatasından (veya benzer { response.data.message } şeklindeki yapıdan)
+ * kullanıcıya gösterilebilir mesajı çekip döndürür. Yoksa undefined.
+ */
+export function extractApiError(error: unknown): string | undefined {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "response" in error
+  ) {
+    const data = (error as { response?: { data?: { message?: string } } }).response?.data;
+    return data?.message;
+  }
+  return undefined;
+}
