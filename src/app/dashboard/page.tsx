@@ -9,7 +9,6 @@ import {
   Legend,
   Pie,
   PieChart,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -21,6 +20,7 @@ import { api } from "@/lib/api";
 import { cn, tl } from "@/lib/utils";
 import { balanceTextClass } from "@/lib/status-colors";
 import { StatCard } from "@/components/charts/stat-card";
+import { useChartSize } from "@/components/charts/chart-box";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TBody, THead, Table, Td, Th } from "@/components/ui/table";
 import { SiteLocationCard } from "@/components/dashboard/site-location-card";
@@ -123,6 +123,9 @@ export default function DashboardHome() {
 
   const t = summary.data?.totals;
 
+  const [cashflowRef, cashflowSize] = useChartSize();
+  const [pieRef, pieSize] = useChartSize();
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
@@ -165,20 +168,22 @@ export default function DashboardHome() {
             <CardTitle>Aylık Nakit Akışı</CardTitle>
           </CardHeader>
           <CardContent className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={cashflow.data ?? []}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
-                <XAxis dataKey="month" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
-                <Tooltip
-                  formatter={(value: number | string) => tl(value)}
-                  contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0" }}
-                />
-                <Legend />
-                <Bar dataKey="income" name="Tahsilat" fill="#10b981" radius={[8, 8, 0, 0]} />
-                <Bar dataKey="expense" name="Gider" fill="#f43f5e" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <div ref={cashflowRef} className="h-full w-full">
+              {cashflowSize.width > 0 && cashflowSize.height > 0 && (
+                <BarChart width={cashflowSize.width} height={cashflowSize.height} data={cashflow.data ?? []}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
+                  <XAxis dataKey="month" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
+                  <Tooltip
+                    formatter={(value) => tl(value as number)}
+                    contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0" }}
+                  />
+                  <Legend />
+                  <Bar dataKey="income" name="Tahsilat" fill="#10b981" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="expense" name="Gider" fill="#f43f5e" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -187,25 +192,27 @@ export default function DashboardHome() {
             <CardTitle>Gider Dağılımı</CardTitle>
           </CardHeader>
           <CardContent className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={(expenseByCategory.data ?? []).map((d) => ({
-                    name: d.name,
-                    value: Number(d.total),
-                  }))}
-                  innerRadius={45}
-                  outerRadius={80}
-                  paddingAngle={3}
-                  dataKey="value"
-                >
-                  {(expenseByCategory.data ?? []).map((d, i) => (
-                    <Cell key={d.categoryId} fill={d.color ?? COLORS[i % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value: number | string) => tl(value)} contentStyle={{ borderRadius: 12 }} />
-              </PieChart>
-            </ResponsiveContainer>
+            <div ref={pieRef} className="h-56 w-full">
+              {pieSize.width > 0 && pieSize.height > 0 && (
+                <PieChart width={pieSize.width} height={pieSize.height}>
+                  <Pie
+                    data={(expenseByCategory.data ?? []).map((d) => ({
+                      name: d.name,
+                      value: Number(d.total),
+                    }))}
+                    innerRadius={45}
+                    outerRadius={80}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {(expenseByCategory.data ?? []).map((d, i) => (
+                      <Cell key={d.categoryId} fill={d.color ?? COLORS[i % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => tl(value as number)} contentStyle={{ borderRadius: 12 }} />
+                </PieChart>
+              )}
+            </div>
             <div className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
               {(expenseByCategory.data ?? []).slice(0, 8).map((d, i) => (
                 <div key={d.categoryId} className="flex items-center gap-2">

@@ -9,12 +9,13 @@ import { toast } from "sonner";
 import { Building2, Lock, Mail } from "lucide-react";
 
 import { api } from "@/lib/api";
+import { extractApiError } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 
 const schema = z.object({
-  email: z.string().email("Geçerli e-posta girin"),
+  email: z.email("Geçerli e-posta girin"),
   password: z.string().min(8, "En az 8 karakter"),
 });
 
@@ -35,8 +36,8 @@ export default function LoginPage() {
       setSession(res.data.accessToken, res.data.user);
       toast.success("Hoş geldin, " + res.data.user.fullName + " 👋");
       router.replace("/dashboard");
-    } catch (e: any) {
-      toast.error(e?.response?.data?.message ?? "Giriş başarısız");
+    } catch (e: unknown) {
+      toast.error(extractApiError(e) ?? "Giriş başarısız");
     } finally {
       setLoading(false);
     }

@@ -1,7 +1,6 @@
 "use client";
 
 import { Bell, Search } from "lucide-react";
-import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth";
@@ -13,10 +12,18 @@ import {
 import Link from "next/link";
 import { formatDateTime } from "@/lib/utils";
 
+interface NotificationItem {
+  id: number;
+  type: string;
+  title: string;
+  body?: string | null;
+  link?: string | null;
+  createdAt: string;
+}
+
 export function Header() {
-  const { user, token } = useAuthStore();
+  const { user } = useAuthStore();
   const qc = useQueryClient();
-  const [tick, setTick] = useState(0);
 
   const unread = useQuery({
     queryKey: ["unread"],
@@ -26,17 +33,13 @@ export function Header() {
 
   const list = useQuery({
     queryKey: ["notifications", "recent"],
-    queryFn: async () => (await api.get("/api/notifications", { params: { page: 0, size: 8 } })).data.content,
+    queryFn: async () =>
+      (await api.get("/api/notifications", { params: { page: 0, size: 8 } })).data
+        .content as NotificationItem[],
   });
 
-  // SSE stream for realtime notifications
-  useEffect(() => {
-    if (!token) return;
-    const url = `${process.env.NEXT_PUBLIC_API_URL || ""}/api/notifications/stream?token=${token}`;
-    // EventSource doesn't support headers; using URL-token fallback works only if backend supports it.
-    // Backend uses JWT in Authorization; we approximate by polling instead. EventSource left as no-op.
-    return () => { setTick((t) => t + 1); };
-  }, [token]);
+  // Realtime bildirimler şimdilik polling ile alınıyor (yukarıdaki refetchInterval).
+  // EventSource header desteklemediği için SSE entegrasyonu sonraya bırakıldı.
 
   const readAll = useMutation({
     mutationFn: async () => api.post("/api/notifications/read-all"),
@@ -80,7 +83,7 @@ export function Header() {
             {(list.data ?? []).length === 0 ? (
               <div className="p-4 text-sm text-muted-foreground">Yeni bildirim yok.</div>
             ) : (
-              (list.data ?? []).map((n: any) => (
+              (list.data ?? []).map((n) => (
                 <Link href={n.link ?? "#"} key={n.id}>
                   <DropdownMenuItem className="flex-col items-start gap-0.5">
                     <div className="flex w-full items-center gap-2">

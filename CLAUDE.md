@@ -13,22 +13,48 @@ raporlama işlerini yönettiği **renkli, dashboard tarzı** bir panel.
 
 ## Teknoloji Stack'i
 
+> **ÖNEMLİ:** Tüm bağımlılıklar yakın zamanda en güncel sürümlere yükseltildi.
+> En kritik geçiş **Tailwind v3 → v4** (CSS-first config) ve **Next 15 → 16**.
+> Aşağıdaki notlar (Tailwind v4 geçişi) yeni session'da tuzağa düşmemek için kritik.
+
 | Bileşen | Sürüm |
 |---|---|
-| Next.js | 15 (App Router) |
-| React | 19 |
-| TypeScript | 5.7 |
-| Tailwind CSS | 3.4 (+ `tailwindcss-animate`) |
+| Next.js | **16** (App Router, Turbopack) |
+| React / react-dom | **19.2** |
+| TypeScript | **6.x** |
+| Tailwind CSS | **4.x** (CSS-first, `@tailwindcss/postcss` + `tw-animate-css`) |
 | UI primitives | Radix UI (dialog, dropdown, label, select, slot, tabs, toast) |
-| Bileşen stili | shadcn benzeri (CVA + `clsx` + `tailwind-merge`) |
-| İkonlar | lucide-react |
-| Grafikler | Recharts |
-| Server state | TanStack Query (react-query) |
-| Client state | Zustand |
-| HTTP | axios |
-| Formlar | react-hook-form + zod (`@hookform/resolvers`) |
-| Toast | sonner |
-| Tarih | date-fns |
+| Bileşen stili | shadcn benzeri (CVA + `clsx` + `tailwind-merge` v3) |
+| İkonlar | lucide-react **1.x** |
+| Grafikler | Recharts **3.x** |
+| Server state | TanStack Query (react-query) 5 |
+| Client state | Zustand 5 |
+| HTTP | axios 1.17 |
+| Formlar | react-hook-form 7 + zod **4** (`@hookform/resolvers` v5) |
+| Toast | sonner **2.x** |
+| Tarih | date-fns 4 |
+| Lint | ESLint **9** (flat config, `eslint.config.mjs`) + eslint-config-next 16 |
+
+### Yükseltme geçişinde dikkat edilmesi gerekenler (tekrar tuzağa düşme)
+
+- **Tailwind v4** artık CSS-first: `tailwind.config.ts` **kaldırıldı**.
+  Tüm tema `src/app/globals.css` içinde `@import "tailwindcss"` + `@theme inline`
+  bloğunda yaşıyor. Renkler `--color-*`, animasyonlar `--animate-*` token'ları.
+- PostCSS: `postcss.config.mjs` artık sadece `@tailwindcss/postcss` plugin'i
+  kullanıyor; `autoprefixer`/`postcss` ayrı paket olarak GEREKMİYOR (v4 dahili).
+- `@tailwind base/components/utilities` direktifleri YOK; tek `@import "tailwindcss"`.
+- `tailwindcss-animate` → **`tw-animate-css`** (`@import "tw-animate-css"`).
+- `darkMode: class` → CSS'te `@custom-variant dark (&:is(.dark *))`.
+- **Zod 4:** `z.string().email()` deprecated → **`z.email()`** kullan.
+- **Recharts 3:** `Tooltip` `formatter` param tipi sıkılaştı; `(value) => fn(value as number)`
+  şeklinde cast et (eski `(value: number | string)` annotasyonu derlenmez).
+- **ESLint 10 HENÜZ uyumsuz:** eslint-config-next 16 + ESLint 10 lint'te crash ediyor
+  (`scopeManager.addGlobals is not a function`). Bu yüzden eslint **9**'da tutuldu.
+  Ekosistem ESLint 10'a yetişince yükseltilebilir.
+- `next lint` deprecated → `lint` script'i artık `eslint .`.
+- `next.config.mjs`'e `turbopack.root` eklendi (multi-lockfile uyarısını susturur).
+- `npm audit`: Next 16'nın transitive `postcss` uyarısı var (moderate) —
+  `audit fix --force` Next'i canary'e düşürür, YAPMA; Next patch'leyince düzelir.
 
 ---
 
