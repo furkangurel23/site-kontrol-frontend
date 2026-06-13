@@ -6,13 +6,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
+import { Select } from "@/components/ui/select";
 import { PageHeader } from "@/components/ui/page-header";
-import { FileSpreadsheet, FileText } from "lucide-react";
+import { FileBarChart, FileSpreadsheet, FileText } from "lucide-react";
 
 export default function RaporlarPage() {
   const year = new Date().getFullYear();
   const [start, setStart] = useState(`${year}-01-01`);
   const [end, setEnd] = useState(`${year}-12-31`);
+
+  const [balanceYear, setBalanceYear] = useState(year);
+  const [bankBalance, setBankBalance] = useState("");
 
   const download = async (url: string, name: string, params?: Record<string, string>) => {
     const res = await api.get(url, { responseType: "blob", params });
@@ -20,9 +24,62 @@ export default function RaporlarPage() {
     const a = document.createElement("a"); a.href = blob; a.download = name; a.click();
   };
 
+  const downloadAnnualBalance = () => {
+    const params: Record<string, string> = { year: String(balanceYear) };
+    if (bankBalance.trim() !== "") params.bankBalance = bankBalance.trim();
+    return download(
+      "/api/reports/annual-balance.pdf",
+      `ozankent-bilanco-${balanceYear}.pdf`,
+      params,
+    );
+  };
+
+  const yearOptions = Array.from({ length: 9 }, (_, i) => year - i);
+
   return (
     <div className="space-y-6">
-      <PageHeader title="Raporlar" subtitle="Excel ve Word formatında veri ihracı" />
+      <PageHeader title="Raporlar" subtitle="Excel, Word ve PDF formatında veri ihracı" />
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-brand text-white">
+              <FileBarChart className="h-5 w-5" />
+            </div>
+            <div>
+              <CardTitle>Yıllık Bilanço (PDF)</CardTitle>
+              <CardDescription>
+                Devreden, gelir, gider ve kasada kalan; gider dağılımı yüzde barlarıyla. Basılabilir, şık bilanço.
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-end gap-3">
+          <Field label="Yıl">
+            <Select
+              value={balanceYear}
+              onChange={(e) => setBalanceYear(Number(e.target.value))}
+              className="w-32"
+            >
+              {yearOptions.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Bankadaki para (opsiyonel)">
+            <Input
+              type="number"
+              step="0.01"
+              inputMode="decimal"
+              placeholder="Örn. 15987,55"
+              value={bankBalance}
+              onChange={(e) => setBankBalance(e.target.value)}
+              className="w-48"
+            />
+          </Field>
+          <Button onClick={downloadAnnualBalance}>PDF İndir</Button>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

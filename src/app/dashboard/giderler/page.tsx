@@ -17,7 +17,7 @@ import { Select } from "@/components/ui/select";
 import { Table, THead, TBody, Th, Td } from "@/components/ui/table";
 import { Empty } from "@/components/ui/empty";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis, Cell } from "recharts";
+import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
 import { useChartSize } from "@/components/charts/chart-box";
 import { isAdminRole, useAuthStore } from "@/stores/auth";
 
@@ -141,14 +141,12 @@ export default function GiderlerPage() {
         <CardContent className="h-72">
           <div ref={catChartRef} className="h-full w-full">
             {catChartSize.width > 0 && catChartSize.height > 0 && (
-              <BarChart width={catChartSize.width} height={catChartSize.height} data={(byCategory.data ?? []).map((d) => ({ name: d.name, total: parseFloat(String(d.total)), color: d.color }))}>
+              <BarChart width={catChartSize.width} height={catChartSize.height} data={(byCategory.data ?? []).map((d) => ({ name: d.name, total: parseFloat(String(d.total)), fill: d.color ?? "#8b5cf6" }))}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
                 <XAxis dataKey="name" fontSize={11} tickLine={false} axisLine={false} angle={-15} textAnchor="end" height={60} />
                 <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
                 <Tooltip formatter={(v) => tl(v as number)} contentStyle={{ borderRadius: 12 }} />
-                <Bar dataKey="total" radius={[8, 8, 0, 0]}>
-                  {(byCategory.data ?? []).map((d, i) => <Cell key={i} fill={d.color ?? "#8b5cf6"} />)}
-                </Bar>
+                <Bar dataKey="total" radius={[8, 8, 0, 0]} />
               </BarChart>
             )}
           </div>

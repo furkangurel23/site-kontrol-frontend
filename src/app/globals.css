@@ -75,8 +75,6 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
 
-  --animate-accordion-down: accordion-down 0.2s ease-out;
-  --animate-accordion-up: accordion-up 0.2s ease-out;
   --animate-shimmer: shimmer 1.6s linear infinite;
 
   --background-image-gradient-brand: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
@@ -86,14 +84,6 @@
   --background-image-gradient-rose: linear-gradient(135deg, #f43f5e 0%, #8b5cf6 100%);
 }
 
-@keyframes accordion-down {
-  from { height: 0; }
-  to { height: var(--radix-accordion-content-height); }
-}
-@keyframes accordion-up {
-  from { height: var(--radix-accordion-content-height); }
-  to { height: 0; }
-}
 @keyframes shimmer {
   100% { transform: translateX(100%); }
 }
@@ -142,13 +132,6 @@
     box-shadow:
       0 10px 15px -3px rgb(0 0 0 / 0.1),
       0 4px 6px -4px rgb(0 0 0 / 0.1);
-  }
-  .stat-card::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
-    opacity: 0.95;
   }
   .scrollbar-thin::-webkit-scrollbar {
     width: 6px;

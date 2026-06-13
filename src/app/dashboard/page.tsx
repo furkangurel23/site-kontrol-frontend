@@ -5,7 +5,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
   Legend,
   Pie,
   PieChart,
@@ -196,19 +195,16 @@ export default function DashboardHome() {
               {pieSize.width > 0 && pieSize.height > 0 && (
                 <PieChart width={pieSize.width} height={pieSize.height}>
                   <Pie
-                    data={(expenseByCategory.data ?? []).map((d) => ({
+                    data={(expenseByCategory.data ?? []).map((d, i) => ({
                       name: d.name,
                       value: Number(d.total),
+                      fill: d.color ?? COLORS[i % COLORS.length],
                     }))}
                     innerRadius={45}
                     outerRadius={80}
                     paddingAngle={3}
                     dataKey="value"
-                  >
-                    {(expenseByCategory.data ?? []).map((d, i) => (
-                      <Cell key={d.categoryId} fill={d.color ?? COLORS[i % COLORS.length]} />
-                    ))}
-                  </Pie>
+                  />
                   <Tooltip formatter={(value) => tl(value as number)} contentStyle={{ borderRadius: 12 }} />
                 </PieChart>
               )}
